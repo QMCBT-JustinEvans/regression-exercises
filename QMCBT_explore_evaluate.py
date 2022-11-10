@@ -2,6 +2,7 @@
 # ######################### EXPLORE #########################
 
 # IMPORTS NEEDED FOR EXPLORATION
+
 import pandas as pd
 import numpy as np
 
@@ -81,9 +82,10 @@ def numeric_range(df):
 
 
 
-# ######################### EVALUATE #########################
+########################## EVALUATE #########################
 
 # IMPORTS NEEDED FOR EVALUATION
+
 from sklearn.metrics import classification_report, confusion_matrix
 
 
@@ -187,8 +189,74 @@ def print_confusion_matrix(actuals, predictions):
 
     
     
-    
-# ######################### WORKING #########################
+######################### PLOT & GRAPH #########################
+
+# IMPORTS NEEDED FOR PLOTS AND GRAPHS
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+import plotly.express as px
+
+# import preprocessing
+import sklearn.preprocessing
+from sklearn.preprocessing import MinMaxScaler 
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import QuantileTransformer
+
+
+
+def sunburst(df, cols, target):
+          """
+          This function will map out a plotly sunburst which is a form of correlated heat map.
+          It does not work well on continuous values and is more suited for distinct values.
+          """
+          
+          fig = px.sunburst(df, path = cols, values = target)
+          return fig.show()
+
+        
+        
+def visualize_scaler(scaler, df, columns_to_scale, bins=10):
+    """
+    This Function takes input arguments, 
+    creates a copy of the df argument, 
+    scales it according to the scaler argument, 
+    then displays subplots of the columns_to_scale argument 
+    before and after scaling.
+    """    
+
+    fig, axs = plt.subplots(len(columns_to_scale), 2, figsize=(16,9))
+    df_scaled = df.copy()
+    df_scaled[columns_to_scale] = scaler.fit_transform(df[columns_to_scale])
+    for (ax1, ax2), col in zip(axs, columns_to_scale):
+        ax1.hist(df[col], bins=bins)
+        ax1.set(title=f'{col} before scaling', xlabel=col, ylabel='count')
+        ax2.hist(df_scaled[col], bins=bins)
+        ax2.set(title=f'{col} after scaling with {scaler.__class__.__name__}', xlabel=col, ylabel='count')
+    plt.tight_layout()
+    #return df_scaled.head().T
+    #return fig, axs
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+######################### WORKING #########################
 
 # BUILD A FUNCTION THAT DOES THIS FOR ALL "FLOAT" COLUMNS
 # float_cols = train_iris.select_dtypes(include='float').columns
