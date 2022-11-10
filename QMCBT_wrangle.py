@@ -171,7 +171,10 @@ def clean_zillow_2017(df):
 ######################### SPLIT DATA #########################
 
 def train_val_test_split(df, target):
-
+    """
+    This Function 
+    """
+    
     # Split df into train and test using sklearn
     train, test = train_test_split(df, test_size=.2, random_state=1992, stratify = df[target])
 
@@ -202,6 +205,11 @@ def train_val_test_split(df, target):
     return train, validate, test 
 
 def split(df, target):
+    """
+    This Function runs the train_val_test_split function
+    and provides a mini report showing the shape of the original DataFrame
+    compared to the shape of the train, validate, and test DataFrames.
+    """
     
     train_df, validate_df, test_df = train_val_test_split(df, target)
     print()
