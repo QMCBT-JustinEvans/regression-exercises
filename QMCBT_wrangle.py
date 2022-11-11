@@ -170,13 +170,15 @@ def clean_zillow_2017(df):
 
 ######################### SPLIT DATA #########################
 
-def train_val_test_split(df, target):
+def split(df):
     """
-    This Function 
+    This Function splits the DataFrame into train, validate, and test
+    then prints a graphic representation and a mini report showing the shape of the original DataFrame
+    compared to the shape of the train, validate, and test DataFrames.
     """
     
     # Split df into train and test using sklearn
-    train, test = train_test_split(df, test_size=.2, random_state=1992, stratify = df[target])
+    train, test = train_test_split(df, test_size=.2, random_state=1992)
 
     # Split train_df into train and validate using sklearn
     # Do NOT stratify on continuous data
@@ -187,6 +189,32 @@ def train_val_test_split(df, target):
     validate.reset_index(drop=True, inplace=True)
     test.reset_index(drop=True, inplace=True)
 
+    train_prcnt = round((train.shape[0] / df.shape[0]), 2)*100
+    validate_prcnt = round((validate.shape[0] / df.shape[0]), 2)*100
+    test_prcnt = round((test.shape[0] / df.shape[0]), 2)*100
+    
+    print('________________________________________________________________')
+    print('|                              DF                              |')
+    print('|--------------------:--------------------:--------------------|')
+    print('|        Train       |      Validate      |        Test        |')
+    print(':--------------------------------------------------------------:')
+    print()
+    print()
+    print(f'Prepared df: {df.shape}')
+    print()
+    print(f'      Train: {train.shape} - {train_prcnt}%')
+    print(f'   Validate: {validate.shape} - {validate_prcnt}%')
+    print(f'       Test: {test.shape} - {test_prcnt}%')
+ 
+    
+    return train, validate, test
+
+
+def Xy_split(feature_cols, target):
+    """
+    
+    """
+    
     print('_______________________________________________________________')
     print('|                              DF                             |')
     print('|-------------------:-------------------:---------------------|')
@@ -194,32 +222,22 @@ def train_val_test_split(df, target):
     print('|-------------------:-------------------:---------------------|')
     print('| x_train | y_train |   x_val  |  y_val |   x_test  |  y_test |')
     print(':-------------------------------------------------------------:')
-    print('')
+    print()
     print('* 1. tree_1 = DecisionTreeClassifier(max_depth = 5)')
     print('* 2. tree_1.fit(x_train, y_train)')
     print('* 3. predictions = tree_1.predict(x_train)')
     print('* 4. pd.crosstab(y_train, y_preds)')
     print('* 5. val_predictions = tree_1.predict(x_val)')
     print('* 6. pd.crosstab(y_val, y_preds)')
-
-    return train, validate, test 
-
-def split(df, target):
-    """
-    This Function runs the train_val_test_split function
-    and provides a mini report showing the shape of the original DataFrame
-    compared to the shape of the train, validate, and test DataFrames.
-    """
     
-    train_df, validate_df, test_df = train_val_test_split(df, target)
-    print()
-    print(f'Prepared df: {df.shape}')
-    print()
-    print(f'Train (train_df): {train_df.shape}')
-    print(f'Validate (validate_df): {validate_df.shape}')
-    print(f'Test (test_df): {test_df.shape}')
-
-    return train_df, validate_df, test_df 
+    
+    X_train, y_train = train[feature_cols], train[target]
+    
+    X_validate, y_validate = validate[feature_cols], validate[target]
+    
+    X_test, y_test = test[feature_cols], test[target]
+    
+    return X_train.head().T
 
 
 

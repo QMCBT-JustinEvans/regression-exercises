@@ -188,7 +188,95 @@ def print_confusion_matrix(actuals, predictions):
 
 
     
+######################### TEST & FIT #########################
+
+def select_kbest(X, y, k=2):
+    """
+    Select K Best
+    - looks at each feature in isolation against the target based on correlation
+    - fastest of all approaches covered in this lesson
+    - doesn't consider feature interactions
+    - After fitting: `.scores_`, `.pvalues_`, `.get_support()`, and `.transform`
     
+    Imports needed:
+    from sklearn.feature_selection import SelectKBest
+    
+    Arguments taken:
+    X = predictors
+    y = target
+    k = number of features to select
+    """
+    
+    kbest = SelectKBest(f_regression, k=k)
+    _ = kbest.fit(X, y)
+    
+    X_transformed = pd.DataFrame(kbest.transform(X),
+                                   columns = X.columns[kbest.get_support()],
+                                   index = X.index)
+    
+    return X_transformed.head().T
+
+def rfe(X, y, k=2):
+    """
+    RFE
+
+    - Recursive Feature Elimination
+    - Progressively eliminate features based on importance to the model
+    - Requires a model with either a `.coef_` or `.feature_importances_` property
+    - After fitting: `.ranking_`, `.get_support()`, and `.transform()`
+    
+    Imports Needed:
+    from sklearn.linear_model import LinearRegression
+    
+    Arguments taken:
+    X = predictors
+    y = target
+    k = number of features to select
+    """
+    
+    model = LinearRegression()
+    rfe = RFE(model, n_features_to_select=k)
+    rfe.fit(X, y)
+    
+    X_transformed = pd.DataFrame(rfe.transform(X),
+                                 index = X.index,
+                                 columns = X.columns[rfe.support_])
+    
+    return X_transformed.head()
+
+def sfs(X, y, k=2):
+    """
+    Sequential Feature Selector
+    
+    - progressively adds features based on cross validated model performance
+    - forwards: start with 0, add the best additional feature until you have the desired number
+    - backwards: start with all features, remove the worst performing until you have the desired number
+    - After fitting: `.support_`, `.transform`
+    
+    Imports Needed:
+    from sklearn.feature_selection import SequentialFeatureSelector
+    
+    Arguments taken:
+    X = predictors
+    y = target
+    k = number of features to select
+    """
+    
+    model = LinearRegression()
+    sfs = SequentialFeatureSelector(model, n_features_to_select=k)
+    sfs.fit(X, y)
+    
+    X_transformed = pd.DataFrame(sfs.transform(X),
+                                 index = X.index,
+                                 columns = X.columns[sfs.support_])
+    
+    return X_transformed.head()
+
+
+
+
+
+
 ######################### PLOT & GRAPH #########################
 
 # IMPORTS NEEDED FOR PLOTS AND GRAPHS
