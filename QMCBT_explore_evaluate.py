@@ -12,12 +12,13 @@ def explore_toc ():
     """
     PRINT TABLE OF CONTENTS FOR CUSTOM EXPLORE FUNCTIONS
     """
-    print("** CUSTOM EXPLORATION FUNCTIONS")
-    print("explore_tips: PRINT A LIST OF USEFUL FUNCTIONS, METHODS, AND ATTRIBUTES USED FOR EXPLORATION")
-    print("nunique_column_all(df): PRINT NUNIQUE OF ALL COLUMNS")
-    print("nunique_column_objects(df): PRINT NUNIQUE OF COLUMNS THAT ARE OBJECTS")
-    print("nunique_column_qty(df): PRINT NUNIQUE OF COLUMNS THAT ARE *NOT* OBJECTS")
-    print("numeric_range(df): COMPUTE RANGE FOR ALL NUMERIC VARIABLES")
+    print("                            ** CUSTOM EXPLORATION FUNCTIONS **")
+    print("              explore_tips: Print a list of useful FUNCTIONS, METHODS, AND ATTRIBUTES used for EXPLORATION")
+    print("    nunique_column_all(df): Print NUNIQUE of all Columns")
+    print("nunique_column_objects(df): Print NUNIQUE of Columns that are OBJECTS")
+    print("    nunique_column_qty(df): Print NUNIQUE of Columns that are *NOT* OBJECTS")
+    print("         numeric_range(df): Compute RANGE for all NUMERIC Variables")
+    print("      check_whitespace(df): CHECKS FOR WHITESPACE IN DataFrame, Replaces with NaN, returns report")
 
     
     
@@ -26,13 +27,13 @@ def explore_tips():
     PRINT A LIST OF USEFUL FUNCTIONS, METHODS, AND ATTRIBUTES USED FOR EXPLORATION
     """
     print("** USEFUL EXPLORATORY CODE**")
-    print ("DFNAME.head()")
-    print ("DFNAME.shape")
-    print ("DFNAME.shape[0] #read row count")
-    print ("DFNAME.describe().T")
-    print ("DFNAME.columns.to_list()")
+    print("DFNAME.head()")
+    print("DFNAME.shape")
+    print("DFNAME.shape[0] #read row count")
+    print("DFNAME.describe().T")
+    print("DFNAME.columns.to_list()")
     print("DFNAME.COLUMNNAME.value_counts(dropna=False)")
-    print ("DFNAME.dtypes")
+    print("DFNAME.dtypes")
     print("DFNAME.select_dtypes(include='object').columns")
     print("DFNAME.select_dtypes(include='float').columns")
     print("pd.crosstab(DFNAME.COLUMN-1, DFNAME.COLUMN-2)")
@@ -80,6 +81,31 @@ def numeric_range(df):
 
 
 
+def check_whitespace(df):
+    """
+    This Function checks the DataFrame argument for whitespace,
+    replaces any that exist with NaN, then returns report.
+    
+    Imports Needed:
+    import numpy as np
+    """
+    
+    row_count = df.shape[0]
+    column_list = df.columns
+    row_value_count = df[column_list].value_counts().sum()
+    whitespace_count = row_count - row_value_count
+    
+    if whitespace_count > 0:
+        df = df.replace(r'^\s*$', np.NaN, regex=True)
+        print(f'There were {whitespace_count} Whitespace characters found and replaced with NULL/NaN.')
+        print('NULL/NaN report:')
+
+    else:
+        print(f'There were {whitespace_count} Whitespace characters found.')
+        print('NULL/NaN report:')
+
+    return df.isnull().sum()
+
 
 
 ########################## EVALUATE #########################
@@ -87,6 +113,11 @@ def numeric_range(df):
 # IMPORTS NEEDED FOR EVALUATION
 
 from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import f_regression
+from sklearn.feature_selection import RFE
+from sklearn.linear_model import LinearRegression
+from sklearn.feature_selection import SequentialFeatureSelector
 
 
 
@@ -94,11 +125,22 @@ def eval_toc():
     """
     PRINT TABLE OF CONTENTS FOR CUSTOM EVALUATION FUNCTIONS
     """
-    print("** CUSTOM EVALUATION FUNCTIONS")
-    print("eval_tips: PRINT A LIST OF USEFUL FUNCTIONS, METHODS, AND ATTRIBUTES USED FOR EXPLORATION")
-    print("print_class_metrics(actuals, predictions): PRINT CLASSIFICATION METRICS FROM CONFUSION MATRIX")
-    print("print_confusion_matrix(actuals, predictions): PRINT CONFUSION MATRIX WITH HELPFUL VISUAL THEN PRINTS CLASSIFICATION REPORT")
-
+    print("                        ** CUSTOM EVALUATION FUNCTIONS **")
+    print("             eval_tips: PRINT A LIST OF USEFUL FUNCTIONS, METHODS, AND ATTRIBUTES USED FOR EXPLORATION")
+    print("   print_class_metrics: PRINT CLASSIFICATION METRICS FROM CONFUSION MATRIX")
+    print("print_confusion_matrix: PRINT CONFUSION MATRIX WITH HELPFUL VISUAL THEN PRINTS CLASSIFICATION REPORT")
+    print()
+    print("              ** TEST & FIT **")
+    print('select_kbest: Words go here to describe the function')
+    print('         rfe: Words go here to describe the function')
+    print('         sfs: Words go here to describe the function')    
+    print()    
+    print("                  ** PLOT & GRAPH **")
+    print('    cs_vis_types: Words go here to describe the function')    
+    print('        sunburst: Words go here to describe the function')    
+    print('visualize_scaler: Words go here to describe the function')
+    print()
+    print()
 
     
 def eval_tips():
@@ -193,6 +235,7 @@ def print_confusion_matrix(actuals, predictions):
 def select_kbest(X, y, k=2):
     """
     Select K Best
+    
     - looks at each feature in isolation against the target based on correlation
     - fastest of all approaches covered in this lesson
     - doesn't consider feature interactions
@@ -200,6 +243,7 @@ def select_kbest(X, y, k=2):
     
     Imports needed:
     from sklearn.feature_selection import SelectKBest
+    from sklearn.feature_selection import f_regression
     
     Arguments taken:
     X = predictors
@@ -214,18 +258,18 @@ def select_kbest(X, y, k=2):
                                    columns = X.columns[kbest.get_support()],
                                    index = X.index)
     
-    return X_transformed.head().T
+    return X_transformed.head()
 
 def rfe(X, y, k=2):
     """
-    RFE
-
-    - Recursive Feature Elimination
+    Recursive Feature Elimination (RFE)
+    
     - Progressively eliminate features based on importance to the model
     - Requires a model with either a `.coef_` or `.feature_importances_` property
     - After fitting: `.ranking_`, `.get_support()`, and `.transform()`
     
     Imports Needed:
+    from sklearn.feature_selection import RFE
     from sklearn.linear_model import LinearRegression
     
     Arguments taken:
@@ -246,7 +290,7 @@ def rfe(X, y, k=2):
 
 def sfs(X, y, k=2):
     """
-    Sequential Feature Selector
+    Sequential Feature Selector (SFS)
     
     - progressively adds features based on cross validated model performance
     - forwards: start with 0, add the best additional feature until you have the desired number
@@ -294,6 +338,43 @@ from sklearn.preprocessing import QuantileTransformer
 
 
 
+def cs_vis_types():
+    print('Types of Visualization')
+    print()
+    print()
+    print('- **Univariate Distributions**')
+    print()
+    print('    - Continuous variable distributions')
+    print('        - histogram')
+    print('        - boxplot')
+    print('        - displot')
+    print()      
+    print('    - Discrete variable distributions')
+    print('        - countplot')
+    print()
+    print()
+    print('- **Bi- and multi-variate relationships**')
+    print()
+    print('    - Continuous with Continuous')
+    print('        - scatter')
+    print('        - line')
+    print('        - pairplot')
+    print('        - heatmap')
+    print('        - relplot')
+    print()          
+    print('    - Discrete with Continuous')
+    print('        - violin')
+    print('        - catplot')
+    print('        - sunburst')
+    print('        - boxplot')
+    print('        - swarmplot')
+    print('        - striplot')
+    print()
+    print('    - Discrete with Discrete')
+    print('        - heatmap')
+
+            
+            
 def sunburst(df, cols, target):
           """
           This function will map out a plotly sunburst which is a form of correlated heat map.

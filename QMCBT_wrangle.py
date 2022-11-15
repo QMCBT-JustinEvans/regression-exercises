@@ -136,54 +136,128 @@ def clean_zillow_2017(df):
     # Remove all of the NaN's
     df = df.dropna() 
     
+    # Auto convert dtype based on values (ignore objects)
+    # Never allow auto assignment; always run without assignment first to check output
+    df = df.convert_dtypes(infer_objects=False)
+    
+    # HANDLE OUTLIERS
+    # filter down outliers to more accurately align with realistic expectations of a Single Family Residence
+    
+    # Set no_outliers equal to df
+    no_outliers = df
+    
+    # Keep all homes that have > 0 and <= 8 Beds and Baths
+    no_outliers = no_outliers[no_outliers.bedroomcnt > 0]
+    no_outliers = no_outliers[no_outliers.bathroomcnt > 0]
+    no_outliers = no_outliers[no_outliers.bedroomcnt <= 8]
+    no_outliers = no_outliers[no_outliers.bathroomcnt <= 8]
+    
+    # Keep all homes that have tax value > 50 thousand and <= 2 million
+    no_outliers = no_outliers[no_outliers.taxvaluedollarcnt >= 50_000]
+    no_outliers = no_outliers[no_outliers.taxvaluedollarcnt <= 2_000_000]
+    
+    # Keep all homes that have sqft > 4 hundred and < 10 thousand
+    no_outliers = no_outliers[no_outliers.calculatedfinishedsquarefeet > 400]
+    no_outliers = no_outliers[no_outliers.calculatedfinishedsquarefeet < 10_000]
+    
+    # Assign 
+    df = no_outliers
+    
+    # FEATURE ENGINEERING
+    
+    # Create a feature to replace yearbuilt that shows the age of the home in 2017 when data was collected
+    df['age'] = 2017 - df.yearbuilt
+    
+    # Create a feature to show tax percentage of value
+    df['taxpercent'] = round((df.taxamount / df.taxvaluedollarcnt), 4)
+    # remove outliers by setting df to include all values except those that hold outliers
+    df = df[df.taxpercent > .0099]
+    df = df[df.taxpercent <= .03]
+
+    # Create a feature to show ratio of Bathrooms to Bedrooms
+    df['bed_bath_ratio'] = round((df.bedroomcnt / df.bathroomcnt), 4)
+    
+    # fips Conversion
+    # This is technically a backwards engineered feature
+    # fips is already an engineered feature of combining county and state into one code
+    # This feature was just a rabit hole for exercise and experience it also provides Human Readable reference
+
+    # Found a csv fips master list on github
+    # Read it in as a DataFrame using raw url
+    url = 'https://raw.githubusercontent.com/kjhealy/fips-codes/master/state_and_county_fips_master.csv'
+    fips_df = pd.read_csv(url)
+    
+    # Cache data into a new csv file
+    fips_df.to_csv('state_and_county_fips_master.csv')
+    
+    # Display just the fips that exist in our zillow df to ensure they exist
+    # I could also do this by pulling a list from zillow and using the in function
+    fips6037 = fips_df[fips_df.fips == 6037]
+    fips6059 = fips_df[fips_df.fips == 6059]
+    fips6111 = fips_df[fips_df.fips == 6111]
+    zillow_fips_df = pd.concat([fips6037, fips6059, fips6111], ignore_index=True)
+    
+    # left merge to join the name and state to the original df
+    left_merged_fips_df = pd.merge(df, fips_df, how="left", on=["fips"])
+    
+    # Rewrite the df
+    df = left_merged_fips_df
+    
+    # MAINTAIN COLUMNS
+    
+    # Rearange Columns
+    df = df[['propertylandusetypeid',  
+    'propertylandusedesc',  
+    'bedroomcnt',  
+    'bathroomcnt',  
+    'bed_bath_ratio',  
+    'calculatedfinishedsquarefeet',  
+    'yearbuilt',  
+    'age',  
+    'taxvaluedollarcnt',  
+    'taxamount',  
+    'taxpercent',  
+    'fips',  
+    'name',  
+    'state']]
+    
     # Drop index and description columns used only for initial filter and verification of data pulled in from SQL.
     df = df.drop(columns=['propertylandusetypeid', 'propertylandusedesc']) 
     
-    # Auto convert dtype based on values (ignore objects)
-    df = df.convert_dtypes(infer_objects=False)
+    # Rename Columns
+    df = df.rename(columns={'bedroomcnt': 'bedrooms',  
+                        'bathroomcnt': 'bathrooms',  
+                        'bed_bath_ratio': 'bath_to_bed_ratio',  
+                        'calculatedfinishedsquarefeet': 'sqft',  
+                        'taxvaluedollarcnt': 'tax_appraisal',  
+                        'taxamount': 'tax_bill',  
+                        'taxpercent': 'tax_percentage',  
+                        'name': 'county'})
     
-    # filter down outliers to more accurately align with realistic expectations of a Single Family Residence
-
-    # remove homes with no bedrooms or bathrooms
-    df = df[df.bedroomcnt > 0]
-    df = df[df.bathroomcnt > 0]
-    
-    # remove homes with more than 8 bedrooms or bathrooms
-    df = df[df.bedroomcnt <= 8]
-    df = df[df.bathroomcnt <= 8]
-    
-    # remove homes with tax value of less than $50k and more than $2 million
-    df = df[df.taxvaluedollarcnt > 50_000]
-    df = df[df.taxvaluedollarcnt < 2_000_000]
-    
-    # remove sqft less than 400 and more than 10,000
-    df = df[df.calculatedfinishedsquarefeet < 10_000]
-    df = df[df.calculatedfinishedsquarefeet > 400]
-
-    # remove tax percent of less than 1% and more than 100%
-    df = df[df.taxpercent > .0099]
-    df = df[df.taxpercent < 1]
-        
     return df
 
 
 
 ######################### SPLIT DATA #########################
 
-def split(df):
+def split(df, stratify=False):
     """
     This Function splits the DataFrame into train, validate, and test
     then prints a graphic representation and a mini report showing the shape of the original DataFrame
     compared to the shape of the train, validate, and test DataFrames.
     """
     
-    # Split df into train and test using sklearn
-    train, test = train_test_split(df, test_size=.2, random_state=1992)
-
-    # Split train_df into train and validate using sklearn
     # Do NOT stratify on continuous data
-    train, validate = train_test_split(train, test_size=.25, random_state=1992)
-
+    if stratify:
+        # Split df into train and test using sklearn
+        train, test = train_test_split(df, test_size=.2, random_state=1992, stratify=df[target])
+        # Split train_df into train and validate using sklearn
+        train, validate = train_test_split(train, test_size=.25, random_state=1992, stratify=df[target])
+        
+    else:
+        train, test = train_test_split(df, test_size=.2, random_state=1992)
+        train, validate = train_test_split(train, test_size=.25, random_state=1992)
+    
     # reset index for train validate and test
     train.reset_index(drop=True, inplace=True)
     validate.reset_index(drop=True, inplace=True)
@@ -229,15 +303,16 @@ def Xy_split(feature_cols, target):
     print('* 4. pd.crosstab(y_train, y_preds)')
     print('* 5. val_predictions = tree_1.predict(x_val)')
     print('* 6. pd.crosstab(y_val, y_preds)')
-    
-    
-    X_train, y_train = train[feature_cols], train[target]
-    
-    X_validate, y_validate = validate[feature_cols], validate[target]
-    
-    X_test, y_test = test[feature_cols], test[target]
-    
-    return X_train.head().T
+    print()
+    print()
+    print(':------------------------------:')
+    print('|Copy, Paste, and Run this code|')
+    print(':------------------------------:')
+    print()
+    print('X_train, y_train = train[feature_cols], train[target]')
+    print('X_validate, y_validate = validate[feature_cols], validate[target]')
+    print('X_test, y_test = test[feature_cols], test[target]')
+    print('X_train.head().T')
 
 
 
@@ -247,6 +322,7 @@ def scale_data(train,
                validate, 
                test, 
                columns_to_scale,
+               scaler,
                return_scaler = False):
     
     """
@@ -254,6 +330,24 @@ def scale_data(train,
     Takes in train, validate, and test data 
     splits and returns their scaled counterparts.
     If return_scalar is True, the scaler object will be returned as well
+    
+    Imports Needed:
+    from sklearn.preprocessing import MinMaxScaler 
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.preprocessing import RobustScaler
+    from sklearn.preprocessing import QuantileTransformer
+    
+    Arguments Taken:
+               train = Assign the train DataFrame
+            validate = Assign the validate DataFrame 
+                test = Assign the test DataFrame
+    columns_to_scale = Assign the Columns that you want to scale
+              scaler = Assign the scaler to use MinMaxScaler(),
+                                                StandardScaler(), 
+                                                RobustScaler(), or 
+                                                QuantileTransformer()
+       return_scaler = False by default and will not return scaler data
+                       True will return the scaler data before displaying the _scaled data
     """
     
     # make copies of our original data so we dont corrupt original split
@@ -261,27 +355,19 @@ def scale_data(train,
     validate_scaled = validate.copy()
     test_scaled = test.copy()
     
-    # set the scaler by removing the applicable #
-    #scaler = MinMaxScaler()
-    #scaler = StandardScaler()
-    #scaler = RobustScaler()
-    scaler = QuantileTransformer()
-    
     # fit the scaled data
     scaler.fit(train[columns_to_scale])
     
     # applying the scaler:
-    train_scaled[columns_to_scale] = pd.DataFrame(scaler.transform(train[columns_to_scale]),
-                                                  columns=train[columns_to_scale].columns.values).set_index([train.index.values])
+    train_scaled[columns_to_scale] = pd.DataFrame(scaler.transform(train[columns_to_scale]), columns=train[columns_to_scale].columns.values).set_index([train.index.values])
                                                   
-    validate_scaled[columns_to_scale] = pd.DataFrame(scaler.transform(validate[columns_to_scale]),
-                                                  columns=validate[columns_to_scale].columns.values).set_index([validate.index.values])
+    validate_scaled[columns_to_scale] = pd.DataFrame(scaler.transform(validate[columns_to_scale]), columns=validate[columns_to_scale].columns.values).set_index([validate.index.values])
     
-    test_scaled[columns_to_scale] = pd.DataFrame(scaler.transform(test[columns_to_scale]),
-                                                 columns=test[columns_to_scale].columns.values).set_index([test.index.values])
+    test_scaled[columns_to_scale] = pd.DataFrame(scaler.transform(test[columns_to_scale]), columns=test[columns_to_scale].columns.values).set_index([test.index.values])
     
     if return_scaler:
         return scaler, train_scaled, validate_scaled, test_scaled
+    
     else:
         return train_scaled, validate_scaled, test_scaled
 
