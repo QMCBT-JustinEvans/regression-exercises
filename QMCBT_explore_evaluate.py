@@ -50,7 +50,7 @@ def nunique_column_all(df):
 
         
         
-def nunique_column_objects(df): 
+def nunique_column_categorical(df): 
     """
     This Function prints the nunique of all columns with dtype: object
     """
@@ -60,7 +60,7 @@ def nunique_column_objects(df):
 
             
             
-def nunique_column_qty(df): 
+def nunique_column_continuous(df): 
     """
     This Function prints the nunique of all columns that are NOT dtype: object
     """
@@ -79,6 +79,30 @@ def numeric_range(df):
     numeric_range['range'] = numeric_range['max'] - numeric_range['min']
     return numeric_range
 
+
+
+def cat_cont_split(df):
+    """
+    This Function creates Categorical (cat) and Continuous (cont) variables and reads them into DataFrames.
+    """
+
+    cat_vars = []
+    for col in df.columns:
+        if df[col].dtypes == 'object':
+            cat_vars.append(col)
+
+    cont_vars = []
+    for col in df.columns:
+        if df[col].dtypes != 'object':
+            cont_vars.append(col)
+        
+    cat_df = pd.DataFrame(df.drop(columns=cont_vars))
+    cont_df = pd.DataFrame(df.drop(columns=cat_vars))
+    
+    return cat_df, cont_df, cat_vars, cont_vars
+    # When I run this it returns the OUT but  gives me a name not defined error when I try to call Variables.
+    # NameError: name 'cat_vars' is not defined
+    # NameError: name 'cat_df' is not defined
 
 
 def check_whitespace(df):
@@ -318,6 +342,68 @@ def sfs(X, y, k=2):
 
 
 
+def calc_regression_errors(df, target, yhat, baseline):
+    """
+    This Function Calculates the MSE, SSE, ESS, TSS and RMSE for the yhat and the baseline.
+    Then compares the SSE of both and determines if the model performs better or worse than baseline.
+    
+    Imports Needed:
+    from sklearn.metrics import mean_squared_error
+    
+    Arguments Taken:
+    df = DataFrame
+    target = what you are trying to predict
+    yhat = X_predictions 
+    baseline = baseline is the mean of the target
+    """
+    
+    print('** yhat Errors:')
+
+    MSE = mean_squared_error(target, train.yhat)
+    print(f'          Mean Squared Error (MSE): {MSE}')
+    
+    SSE = MSE * len(train)
+    print(f'       Sum of Squared Errors (SSE): {SSE}')
+    
+    ESS = ((train.yhat - target.mean())**2).sum()
+    print(f'    Explained Sum of Squares (ESS): {ESS}')
+    
+    TSS = ESS + SSE
+    print(f'        Total Sum of Squares (TSS): {TSS}')
+    
+    RMSE = MSE**.5
+    print(f'Root Mesn of Squared Errors (RMSE): {RMSE}')
+    
+    print()
+    R2 = ESS / TSS
+    print(f'           Explained Variance (R2): {R2}')
+    #from sklearn: r2_score(target, yhat)
+    
+    print()
+    print('** Baseline Errors:')
+
+    MSE_baseline = mean_squared_error(target, train.baseline)
+    print(f'          Mean Squared Error (MSE): {MSE_baseline}')
+    
+    SSE_baseline = MSE_baseline * len(train)
+    print(f'       Sum of Squared Errors (SSE): {SSE_baseline}')
+    
+    ESS_baseline = ((train.baseline - target.mean())**2).sum()
+    print(f'    Explained Sum of Squares (ESS): {ESS_baseline}')
+    
+    TSS_baseline = ESS_baseline + SSE_baseline
+    print(f'        Total Sum of Squares (TSS): {TSS_baseline}')
+    
+    RMSE_baseline = MSE_baseline**.5
+    print(f'Root Mean of Squared Errors (RMSE): {RMSE_baseline}')
+    
+    print()
+    print('** Model Performance:')
+    if SSE < SSE_baseline:
+        print('Model performs better than baseline.')
+
+    else:
+        print('Model performs worse than baseline.')
 
 
 
@@ -386,6 +472,20 @@ def sunburst(df, cols, target):
 
         
         
+def plot_variable_pairs(df, target):
+    """
+    Takes in a dataframe and target variable and plots each feature with the target variable
+    """
+
+    cols = df.columns.to_list()
+    cols.remove(target) 
+    for col in cols:
+        sns.lmplot(x=col, y=target, data=df, line_kws={'color': 'red'})
+    
+    return plt.show()        
+        
+        
+        
 def visualize_scaler(scaler, df, columns_to_scale, bins=10):
     """
     This Function takes input arguments, 
@@ -409,7 +509,18 @@ def visualize_scaler(scaler, df, columns_to_scale, bins=10):
 
         
         
-        
+def plot_residuals(df, y_train, X_train, model):
+    """
+    Creates a residual plot
+    """
+    residuals = y_train - model.predict(X_train)
+    
+    sns.scatterplot(data=df, x=y_train, y=residuals)
+
+    plt.xlabel('Home Value')
+    plt.ylabel('Residuals')
+    plt.title('Residual vs Home Value Plot')
+    plt.show()        
         
         
         

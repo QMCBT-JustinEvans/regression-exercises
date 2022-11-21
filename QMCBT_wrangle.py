@@ -284,9 +284,19 @@ def split(df, stratify=False):
     return train, validate, test
 
 
-def Xy_split(feature_cols, target):
+def Xy_split(feature_cols, target, train, validate, test):
     """
+    This function will split the train, validate, and test data by the Feature Columns selected and the Target.
     
+    Imports Needed:
+    from sklearn.model_selection import train_test_split
+    
+    Arguments Taken:
+       feature_cols: list['1','2','3'] the feature columns you want to run your model against.
+             target: list the target feature that you will try to predict
+              train: Assign the name of your train DataFrame
+           validate: Assign the name of your validate DataFrame
+               test: Assign the name of your test DataFrame
     """
     
     print('_______________________________________________________________')
@@ -296,24 +306,24 @@ def Xy_split(feature_cols, target):
     print('|-------------------:-------------------:---------------------|')
     print('| x_train | y_train |   x_val  |  y_val |   x_test  |  y_test |')
     print(':-------------------------------------------------------------:')
-    print()
-    print('* 1. tree_1 = DecisionTreeClassifier(max_depth = 5)')
-    print('* 2. tree_1.fit(x_train, y_train)')
-    print('* 3. predictions = tree_1.predict(x_train)')
-    print('* 4. pd.crosstab(y_train, y_preds)')
-    print('* 5. val_predictions = tree_1.predict(x_val)')
-    print('* 6. pd.crosstab(y_val, y_preds)')
-    print()
-    print()
-    print(':------------------------------:')
-    print('|Copy, Paste, and Run this code|')
-    print(':------------------------------:')
-    print()
-    print('X_train, y_train = train[feature_cols], train[target]')
-    print('X_validate, y_validate = validate[feature_cols], validate[target]')
-    print('X_test, y_test = test[feature_cols], test[target]')
-    print('X_train.head().T')
+    
+    # Trying to get this to run inside Wrangle as a Function (train, validate, test not defined)
+    X_train, y_train = train[feature_cols], train[target]
+    X_validate, y_validate = validate[feature_cols], validate[target]
+    X_test, y_test = test[feature_cols], test[target]
 
+    print()
+    print()
+    print(f'   X_train: {X_train.shape}   {X_train.columns}')
+    print(f'   y_train: {y_train.shape}     Index({target})')
+    print()
+    print(f'X_validate: {X_validate.shape}   {X_validate.columns}')
+    print(f'y_validate: {y_validate.shape}     Index({target})')
+    print()
+    print(f'    X_test: {X_test.shape}   {X_test.columns}')
+    print(f'    y_test: {y_test.shape}     Index({target})')
+    
+    return X_train, y_train, X_validate, y_validate, X_test, y_test
 
 
 ######################### SCALE SPLIT #########################
